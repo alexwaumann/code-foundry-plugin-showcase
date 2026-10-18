@@ -1,0 +1,60 @@
+{
+  "name": "showcase",
+  "displayName": "Showcase",
+  "version": "0.1.0",
+  "description": "Every plugin component in one gallery: each view node, field, span and button style, plus flags, toasts, context, session environment, secrets, events, host commands and its own thread and terminal. For plugin authors and for testing the host.",
+  "protocol": 1,
+  "exec": ["bin/showcase"],
+  "permissions": {
+    "commands": ["thread.send", "view.open.url", "pr.checks"],
+    "events": ["threads", "project", "gh"],
+    "threadStatus": true,
+    "sessionEnv": true,
+    "secrets": true,
+    "threads": true,
+    "terminals": true
+  },
+  "commands": [
+    {
+      "name": "ping",
+      "title": "Ping Showcase",
+      "description": "Answer pong with a running count: a command with no args and no confirm.",
+      "timeoutSeconds": 5
+    },
+    {
+      "name": "boom",
+      "title": "Blow Up Something",
+      "description": "Pretend to destroy something: a command that asks first, with an arg in its confirm text. Nothing is deleted.",
+      "confirm": "Blow up {what}? Nothing is really deleted.",
+      "timeoutSeconds": 5,
+      "args": [{ "name": "what", "positional": true, "default": "the demo", "description": "What to blow up" }]
+    },
+    {
+      "name": "flag",
+      "title": "Flag Thread",
+      "description": "Raise an attention or error flag on a thread, or clear it (level none).",
+      "timeoutSeconds": 10,
+      "args": [
+        { "name": "level", "type": "enum", "enum": ["attention", "error", "none"], "default": "attention", "positional": true, "description": "attention, error, or none to clear" },
+        { "name": "reason", "default": "showcase says hello", "description": "The flag's reason (one line, up to 80 characters)" },
+        { "name": "until-seen", "type": "bool", "default": "false", "description": "Clear it when the thread is opened" },
+        { "name": "thread", "context": "thread", "description": "The thread (default: the active one)" }
+      ]
+    },
+    {
+      "name": "gate",
+      "title": "Turn Showcase Gate On or Off",
+      "description": "Set or remove the showcase.on fact for a thread (or everywhere); the Gated tab exists only where it is true.",
+      "timeoutSeconds": 5,
+      "args": [
+        { "name": "state", "type": "enum", "enum": ["on", "off"], "default": "on", "positional": true, "description": "on or off" },
+        { "name": "scope", "type": "enum", "enum": ["thread", "global"], "default": "thread", "description": "The thread only, or everywhere" },
+        { "name": "thread", "context": "thread", "description": "The thread (default: the active one)" }
+      ]
+    }
+  ],
+  "surfaces": [
+    { "id": "gallery", "title": "Showcase", "icon": "layers", "scope": "global" },
+    { "id": "gated", "title": "Gated", "icon": "lock-open", "scope": "thread", "when": "showcase.on" }
+  ]
+}
