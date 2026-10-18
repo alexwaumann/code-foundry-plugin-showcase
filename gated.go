@@ -41,7 +41,7 @@ func (d *gated) render() error {
 		fact = "(not in facts)"
 	}
 	return h.UpdateView(d.open.Instance, ui.View{
-		Header: &ui.Header{Title: "Gated", Pill: ui.NewPill("gate on", ui.ToneOK), Subline: ui.Plain("Exists only while showcase.on holds; Turn gate off removes this tab.")},
+		Header: &ui.Header{Title: "Gated", Pill: ui.NewPill("gate on", ui.ToneOK), Subline: ui.Plain("Offered while showcase.on holds")},
 		Nodes: []ui.Node{
 			ui.NewText("gated-why", ui.Plain(why+".")),
 			ui.NewPairs("gated-facts",

@@ -140,6 +140,9 @@ func TestManifest(t *testing.T) {
 		t.Fatalf("plugin.json: %v %v", err, warnings)
 	}
 	p := plugin()
+	if m.Version != version {
+		t.Errorf("plugin.json version %s, gallery.go says %s", m.Version, version)
+	}
 	for _, c := range m.Commands {
 		if p.Commands[c.Name] == nil {
 			t.Errorf("command %s is declared but not served", c.Name)
@@ -538,8 +541,9 @@ func TestOwnedTab(t *testing.T) {
 	if len(h.PluginTerminals()) != 0 {
 		t.Errorf("terminal not closed: %+v", h.PluginTerminals())
 	}
-	if find(decode(t, h, inst).Nodes, "term-none") == nil {
-		t.Error("no empty state after stop")
+	none := find(decode(t, h, inst).Nodes, "term-none")
+	if none == nil || len(none.Empty.Actions) != 1 || none.Empty.Actions[0].Action.Event != "term-restart" {
+		t.Error("no empty state with a Start button after stop")
 	}
 	if err := click(t, h, "owned-archive", "owned-archive-btn", "", pluginsdk.UiContext{}); err != nil {
 		t.Fatal(err)

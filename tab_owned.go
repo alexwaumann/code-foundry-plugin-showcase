@@ -176,7 +176,9 @@ func ownedNodes(g *gallery) []ui.Node {
 	listSec.Section.Collapsible, listSec.Section.Collapsed = true, true
 
 	// Terminal.
-	term := ui.NewEmpty("term-none", "No terminal", ui.Plain("Restart creates one."))
+	term := ui.Node{Key: "term-none", Empty: &ui.Empty{Glyph: ui.IconGlyph("terminal", ui.ToneMuted), Title: "No terminal",
+		Body:    ui.Plain("Start one: a shell loop that ticks every second."),
+		Actions: []ui.Button{ui.EventButton("term-start-btn", "Start", "term-restart").WithIcon("play").WithStyle(ui.ButtonOutline)}}}
 	if o.Terminal != "" {
 		term = ui.Node{Key: "term", Terminal: &ui.Terminal{TerminalID: o.Terminal, Title: tickerTitle, Rows: 10,
 			Actions: []ui.Button{

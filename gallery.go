@@ -147,7 +147,7 @@ func (g *gallery) viewLocked() ui.View {
 		Icon:        "layers",
 		Title:       "Showcase · " + t.label,
 		TabTitle:    "Showcase",
-		Pill:        ui.NewPill("v0.1.0", ui.ToneNeutral),
+		Pill:        ui.NewPill("v"+version, ui.ToneNeutral),
 		Trailing:    ui.Plain(fmt.Sprintf("view %d", g.renders+1)),
 		SublineIcon: "eye",
 		Subline:     ui.Plain(t.short),
@@ -250,3 +250,6 @@ func orNone(s string, mono bool) *ui.Inline {
 	}
 	return ui.Spans(sp)
 }
+
+// version is plugin.json's, shown in the header pill.
+const version = "0.1.1"
