@@ -11,6 +11,7 @@ import (
 
 var actionsTab = tabDef{
 	key: tabActions, label: "Actions",
+	short: "Every button style and action kind",
 	look:  "No filled buttons; amber outline only on attention; destructive asks via its command; the last click below names key, data and the panel's thread.",
 	nodes: actionNodes,
 	acts: map[string]actFunc{
@@ -89,7 +90,7 @@ func actionNodes(g *gallery) []ui.Node {
 		ui.NewSection("sec-icon-only", "Icon only (tooltip = label)", ui.NewActions("bar-icon-only", iconOnly...)),
 		ui.NewSection("sec-disabled", "Disabled", ui.NewActions("bar-disabled", disabled...)),
 		ui.NewSection("sec-loading", "Loading state (busy)", ui.NewActions("bar-loading", load, loadIcon, alwaysBusy)),
-		ui.NewSection("sec-commands", "Commands (the host runs them with this panel's context)",
+		ui.NewSection("sec-commands", "Command buttons",
 			ui.NewActions("bar-commands",
 				ui.CommandButton("cmd-ping", "Ping", "plugin.showcase.ping", nil).WithIcon("zap"),
 				ui.CommandButton("cmd-boom", "Blow up the gallery", "plugin.showcase.boom", map[string]string{"what": "the gallery"}).WithStyle(ui.ButtonDestructive).WithIcon("trash-2"),
@@ -97,7 +98,7 @@ func actionNodes(g *gallery) []ui.Node {
 				ui.CommandButton("cmd-unflag", "Clear flag", "plugin.showcase.flag", map[string]string{"level": "none"}),
 				ui.CommandButton("cmd-url", "Open URL (host command)", "view.open.url", map[string]string{"url": "https://github.com/alexwaumann/code-foundry-plugin-showcase"}).WithIcon("globe"),
 			)),
-		ui.NewSection("sec-host-actions", "Done by the host (never reach the plugin)",
+		ui.NewSection("sec-host-actions", "Open URL and copy (host)",
 			ui.Node{Key: "bar-host", Actions: &ui.Actions{Align: ui.AlignEnd, Buttons: []ui.Button{
 				ui.URLButton("btn-url", "Open URL", "https://github.com/alexwaumann/code-foundry").WithIcon("external-link"),
 				ui.CopyButton("btn-copy", "Copy text", "copied from the showcase plugin").WithIcon("copy"),

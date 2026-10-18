@@ -8,6 +8,7 @@ import (
 
 var textTab = tabDef{
 	key: tabText, label: "Text",
+	short: "Sizes, spans, ticking times, markdown",
 	look:  "Every text size, inline span and time style; times tick on their own; markdown wraps at 280 px.",
 	nodes: textNodes,
 }

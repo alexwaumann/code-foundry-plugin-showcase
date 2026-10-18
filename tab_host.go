@@ -14,6 +14,7 @@ import (
 
 var hostTab = tabDef{
 	key: tabHost, label: "Host",
+	short: "Host calls on this panel's thread",
 	look:  "Each button calls the host on the thread this panel is beside: flags in the sidebar, toasts, the Gated tab, env, Keychain, event counts, host commands.",
 	nodes: hostNodes,
 	acts: map[string]actFunc{
@@ -76,7 +77,7 @@ func hostNodes(g *gallery) []ui.Node {
 		ui.NewPairs("pairs-flag", flagPairs...)))
 
 	// Toasts.
-	nodes = append(nodes, ui.NewSection("sec-toasts", "Toast (app) and ToastIn (this panel), one a second",
+	nodes = append(nodes, ui.NewSection("sec-toasts", "Toast and ToastIn (panel)",
 		ui.NewActions("bar-toasts",
 			ui.EventButton("toast-info", "Info", "toast").WithData("app info"),
 			ui.EventButton("toast-att", "Attention", "toast").WithData("app attention"),
@@ -92,7 +93,7 @@ func hostNodes(g *gallery) []ui.Node {
 		ui.Pair{Key: "gate-thread", Label: "This thread", Pill: onOff(gateThread)},
 		ui.Pair{Key: "gate-global", Label: "Everywhere", Pill: onOff(s.gates.Global)},
 		ui.NewPair("gate-count", "Threads gated", ui.Plain(fmt.Sprint(len(s.gates.Threads)))))
-	nodes = append(nodes, ui.NewSection("sec-gate", "SetContext: showcase.on gates the Gated tab",
+	nodes = append(nodes, ui.NewSection("sec-gate", "SetContext: showcase.on",
 		gatePairs,
 		ui.NewActions("bar-gate",
 			ui.CommandButton("gate-on", "Turn gate on", "plugin.showcase.gate", map[string]string{"state": "on"}).WithStyle(ui.ButtonOutline).WithIcon("lock-open"),
@@ -155,7 +156,7 @@ func hostNodes(g *gallery) []ui.Node {
 		}
 		secNodes = append(secNodes, ui.NewText("secret-result", ui.Spans(ui.T(s.secrets.Result).WithTone(tone), ui.T(" · "), ui.At(s.secrets.At, ui.TimeRelative))))
 	}
-	nodes = append(nodes, ui.NewSection("sec-secrets", "Secrets (Keychain, values never shown)", secNodes...))
+	nodes = append(nodes, ui.NewSection("sec-secrets", "Secrets (never shown)", secNodes...))
 
 	// Events.
 	subRows := []ui.Row{}
@@ -180,7 +181,7 @@ func hostNodes(g *gallery) []ui.Node {
 		}
 		subRows = append(subRows, r)
 	}
-	nodes = append(nodes, ui.NewSection("sec-events", "Subscribe (permission events), counts per source",
+	nodes = append(nodes, ui.NewSection("sec-events", "Subscribe: events per source",
 		ui.Node{Key: "list-subs", List: &ui.List{Rows: subRows}}))
 
 	// Invoke.
@@ -203,12 +204,19 @@ func hostNodes(g *gallery) []ui.Node {
 			glyph, line = ui.StatusGlyph(ui.StatusFailed), ui.Spans(ui.T(fmt.Sprintf("%d: ", r.Code)).AsMono(), ui.T(r.Err).WithTone(ui.ToneError))
 		}
 		row := ui.Row{Key: key, Glyph: glyph, Title: k, TitleMeta: orNone(short(r.Thread), true), Line2: line, Trailing: ui.Spans(ui.At(r.At, ui.TimeRelative))}
+		if r.Err != "" {
+			row.Line2 = ui.Spans(ui.T(fmt.Sprintf("failed with %d", r.Code)).WithTone(ui.ToneError))
+		}
 		invNodes = append(invNodes, ui.Node{Key: key + "-list", List: &ui.List{Rows: []ui.Row{row}}})
+		if r.Err != "" {
+			// The whole error: a row's line 2 is one truncated line.
+			invNodes = append(invNodes, ui.Node{Key: key + "-err", Text: &ui.Text{Content: ui.Spans(ui.T(r.Err).WithTone(ui.ToneError)), Size: ui.TextSm}})
+		}
 		if r.JSON != "" {
 			invNodes = append(invNodes, ui.Node{Key: key + "-json", Log: &ui.Log{Title: k + " --json", Rows: 6, Wrap: true, Text: r.JSON}})
 		}
 	}
-	nodes = append(nodes, ui.NewSection("sec-invoke", "Invoke host commands with the act's context", invNodes...))
+	nodes = append(nodes, ui.NewSection("sec-invoke", "Invoke with the act's context", invNodes...))
 	return nodes
 }
 

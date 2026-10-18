@@ -11,6 +11,7 @@ import (
 
 var ownedTab = tabDef{
 	key: tabOwned, label: "Owned",
+	short: "Plugin thread and terminal nodes",
 	look:  "The plugin's own threads (editable, read-only) and a terminal ticking every second; Open in bottom panel; nothing here shows in the sidebar.",
 	nodes: ownedNodes,
 	acts: map[string]actFunc{
@@ -21,6 +22,7 @@ var ownedTab = tabDef{
 		"term-restart":   restartTerminal,
 		"term-stop":      stopTerminal,
 		"owned-refresh":  refreshOwnedAct,
+		"owned-variant":  pickVariant,
 	},
 }
 
@@ -116,15 +118,27 @@ func ownedNodes(g *gallery) []ui.Node {
 	if o.Narrator != "" {
 		narrator = ui.Node{Key: "narrator", Thread: &ui.Thread{ThreadID: o.Narrator, ReadOnly: true, Height: ui.HeightPx(240)}}
 	}
-	threadsSec := ui.NewSection("sec-threads", "Plugin threads", threadInfo,
-		ui.NewText("helper-label", ui.Spans(ui.T("Editable (composer, 420 px):").AsStrong())), helper,
-		ui.NewText("narrator-label", ui.Spans(ui.T("Read-only (no composer, 240 px): only the plugin sends").AsStrong())), narrator,
+	// Each thread node holds its own stream in the GUI, so one at a time by default;
+	// "both" is there to test the host with two (and the terminal) on screen.
+	variant := g.threadVariant
+	chip := func(key, label, v string) ui.Chip {
+		return ui.Chip{Key: key, Label: label, Selected: variant == v, Action: ui.EventAction("owned-variant", v)}
+	}
+	threadNodes := []ui.Node{threadInfo,
+		ui.NewChips("chips-variant", chip("var-editable", "Editable", "editable"), chip("var-readonly", "Read-only", "readonly"), chip("var-both", "Both (stress)", "both"))}
+	if variant != "readonly" {
+		threadNodes = append(threadNodes, ui.NewText("helper-label", ui.Spans(ui.T("Editable: composer, 420 px").AsStrong())), helper)
+	}
+	if variant != "editable" {
+		threadNodes = append(threadNodes, ui.NewText("narrator-label", ui.Spans(ui.T("Read-only: no composer, 240 px").AsStrong())), narrator)
+	}
+	threadsSec := ui.NewSection("sec-threads", "Plugin threads", append(threadNodes,
 		ui.NewActions("bar-owned",
 			ui.EventButton("owned-ask-btn", "Ask the helper", "owned-ask").WithIcon("send").WithStyle(ui.ButtonOutline),
 			ui.EventButton("owned-narrate-btn", "Narrate", "owned-narrate").WithIcon("message-square"),
 			ui.EventButton("owned-refresh-btn", "Refresh list", "owned-refresh").WithIcon("refresh-cw").AsIconOnly(),
 			ui.EventButton("owned-archive-btn", "Archive both", "owned-archive").WithStyle(ui.ButtonDestructive).WithIcon("trash-2"),
-			ui.EventButton("owned-recreate-btn", "Recreate", "owned-recreate").WithIcon("rotate-ccw")))
+			ui.EventButton("owned-recreate-btn", "Recreate", "owned-recreate").WithIcon("rotate-ccw")))...)
 
 	// The plugin's view of its own threads and terminals (thread/list, terminal/list).
 	rows := []ui.Row{}
@@ -170,7 +184,7 @@ func ownedNodes(g *gallery) []ui.Node {
 				ui.EventButton("term-stop-btn", "Stop", "term-stop").WithIcon("square").WithStyle(ui.ButtonDestructive),
 			}}}
 	}
-	termSec := ui.NewSection("sec-term", "Plugin terminal (10 rows, 2 buttons + Open in bottom panel)", term)
+	termSec := ui.NewSection("sec-term", "Plugin terminal (10 rows)", term)
 	return append(nodes, threadsSec, termSec, listSec)
 }
 
@@ -246,4 +260,16 @@ func restartTerminal(ctx context.Context, g *gallery, act pluginsdk.SurfaceAct) 
 	time.Sleep(50 * time.Millisecond)
 	go g.s.ensureOwned(context.WithoutCancel(ctx))
 	return nil
+}
+
+func pickVariant(_ context.Context, g *gallery, act pluginsdk.SurfaceAct) error {
+	switch act.Data {
+	case "editable", "readonly", "both":
+	default:
+		return fmt.Errorf("unknown variant %q", act.Data)
+	}
+	g.s.mu.Lock()
+	g.threadVariant = act.Data
+	g.s.mu.Unlock()
+	return g.render()
 }

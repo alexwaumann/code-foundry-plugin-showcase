@@ -15,6 +15,7 @@ import (
 
 var formsTab = tabDef{
 	key: tabForms, label: "Forms",
+	short: "Every field; GUI and plugin checks",
 	look:  "GUI checks required and pattern as you type; the plugin re-checks (try handle admin); drafts survive tab switches; Reset drops them.",
 	nodes: formNodes,
 	acts: map[string]actFunc{

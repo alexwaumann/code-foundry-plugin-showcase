@@ -10,6 +10,7 @@ import (
 
 var statusTab = tabDef{
 	key: tabStatus, label: "Status",
+	short: "Progress, notices, empty, sections",
 	look:  "Progress bars, a notice per tone, empty states, and sections: titled, collapsible, card tones, stale (dimmed), nested two deep.",
 	nodes: statusNodes,
 	acts: map[string]actFunc{
@@ -67,7 +68,7 @@ func statusNodes(g *gallery) []ui.Node {
 	}
 	stale.Section.Actions = []ui.Button{ui.EventButton("stale-btn", "Toggle stale", "stale-toggle").WithIcon("refresh-cw")}
 
-	titled := ui.NewSection("sec-titled", "Titled section with meta, pill and 2 buttons",
+	titled := ui.NewSection("sec-titled", "Titled, meta, pill, buttons",
 		ui.NewText("titled-body", ui.Plain("The title row carries a meta, a pill and up to two buttons.")))
 	titled.Section.Meta, titled.Section.Pill = ui.Plain("last 24 h"), ui.NewPill("3", ui.ToneNeutral)
 	titled.Section.Actions = []ui.Button{noop("titled-a", "Refresh").WithIcon("refresh-cw").AsIconOnly(), noop("titled-b", "More")}

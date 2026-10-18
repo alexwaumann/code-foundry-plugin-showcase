@@ -176,8 +176,11 @@ func TestEveryTabValid(t *testing.T) {
 			if len(v.Nodes) == 0 {
 				t.Errorf("tab %s has no nodes", d.key)
 			}
-			if v.Header == nil || v.Header.Subline == nil || v.Header.Subline.Text != d.look {
+			if v.Header == nil || v.Header.Subline == nil || v.Header.Subline.Text != d.short || len(d.short) > 40 {
 				t.Errorf("tab %s: header sub-line %+v", d.key, v.Header)
+			}
+			if v.Nodes[0].Key != "look" || v.Nodes[0].Text.Content.Spans[1].Text != d.look {
+				t.Errorf("tab %s: no look-for node first", d.key)
 			}
 		}
 	}
@@ -497,8 +500,11 @@ func TestOwnedTab(t *testing.T) {
 	switchTab(t, h, tabOwned, pluginsdk.UiContext{})
 	h.WaitFor(5*time.Second, func(h *plugintest.Host) bool {
 		v := decode(t, h, inst)
-		return find(v.Nodes, "helper") != nil && find(v.Nodes, "narrator") != nil && find(v.Nodes, "term") != nil
+		return find(v.Nodes, "helper") != nil && find(v.Nodes, "narrator") == nil && find(v.Nodes, "term") != nil
 	})
+	if err := click(t, h, "owned-variant", "var-both", "both", pluginsdk.UiContext{}); err != nil {
+		t.Fatal(err)
+	}
 	created := h.CreatedThreads()
 	if len(created) != 2 || created[0].Title != helperTitle || created[0].Cwd != h.DataDir() ||
 		len(created[0].AddDirs) != 1 || created[0].Env["SHOWCASE_THREAD"] != "helper" {
@@ -700,6 +706,9 @@ func TestHostTab(t *testing.T) {
 	denied := mustFind(t, v, "inv-res-thread-archive-list").List.Rows[0]
 	if denied.Glyph.Status != ui.StatusFailed || !strings.Contains(denied.Line2.Spans[0].Text, "-32001") {
 		t.Errorf("denied row %+v", denied.Line2)
+	}
+	if !strings.Contains(mustFind(t, v, "inv-res-thread-archive-err").Text.Content.Spans[0].Text, "permission denied") {
+		t.Error("the whole error is not shown")
 	}
 }
 

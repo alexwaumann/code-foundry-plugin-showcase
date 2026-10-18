@@ -27,8 +27,11 @@ const (
 // how to draw it, and its events.
 type tabDef struct {
 	key, label, look string
-	nodes            func(g *gallery) []ui.Node
-	acts             map[string]actFunc
+	// short is the header sub-line (one line: the host truncates it); look is the full
+	// "what to look for", the first node of the tab.
+	short string
+	nodes func(g *gallery) []ui.Node
+	acts  map[string]actFunc
 }
 
 type actFunc func(ctx context.Context, g *gallery, act pluginsdk.SurfaceAct) error
@@ -79,11 +82,13 @@ type gallery struct {
 	stale        bool
 	// Actions
 	busyKey string
-	clicks  int
+	// Owned
+	threadVariant string
+	clicks        int
 }
 
 func (s *showcase) newGallery(_ context.Context, h *pluginsdk.Host, open pluginsdk.SurfaceOpen) (pluginsdk.Surface, error) {
-	g := &gallery{s: s, open: open, tab: tabText, progress: 0.62, opened: s.now()}
+	g := &gallery{s: s, open: open, tab: tabText, progress: 0.62, opened: s.now(), threadVariant: "editable"}
 	g.resetLog()
 	g.profile = newProfileForm()
 	s.mu.Lock()
@@ -145,13 +150,14 @@ func (g *gallery) viewLocked() ui.View {
 		Pill:        ui.NewPill("v0.1.0", ui.ToneNeutral),
 		Trailing:    ui.Plain(fmt.Sprintf("view %d", g.renders+1)),
 		SublineIcon: "eye",
-		Subline:     ui.Plain(t.look),
+		Subline:     ui.Plain(t.short),
 		Actions: []ui.Button{
 			ui.EventButton("hdr-refresh", "Re-render this tab", "refresh").WithIcon("refresh-cw").AsIconOnly(),
 			ui.URLButton("hdr-readme", "Open the README", readmeURL).WithIcon("external-link").AsIconOnly(),
 		},
 	}
-	return ui.View{Header: header, Tabs: ui.NewTabs(g.tab, items...), Nodes: t.nodes(g)}
+	look := ui.Node{Key: "look", Text: &ui.Text{Content: ui.Spans(ui.T("Look for: ").AsStrong(), ui.T(t.look)), Size: ui.TextSm}}
+	return ui.View{Header: header, Tabs: ui.NewTabs(g.tab, items...), Nodes: append([]ui.Node{look}, t.nodes(g)...)}
 }
 
 const readmeURL = "https://github.com/alexwaumann/code-foundry-plugin-showcase#readme"

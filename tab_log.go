@@ -12,6 +12,7 @@ import (
 
 var logTab = tabDef{
 	key: tabLog, label: "Log",
+	short: "Streaming, tones, no-wrap, noFollow",
 	look:  "Stream follows the tail (tab badge live, button busy); lines log has every tone and does not wrap; noFollow stays put.",
 	nodes: logNodes,
 	acts: map[string]actFunc{
