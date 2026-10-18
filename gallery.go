@@ -211,7 +211,7 @@ func (g *gallery) Visibility(visible bool) {
 	g.s.mu.Unlock()
 }
 
-func (g *gallery) Close() {
+func (g *gallery) Close(pluginsdk.CloseReason) {
 	g.s.mu.Lock()
 	delete(g.s.galleries, g.open.Instance)
 	g.streamRun++ // stops a running stream
@@ -252,4 +252,4 @@ func orNone(s string, mono bool) *ui.Inline {
 }
 
 // version is plugin.json's, shown in the header pill.
-const version = "0.1.1"
+const version = "0.1.2"

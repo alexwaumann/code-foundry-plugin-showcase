@@ -61,7 +61,7 @@ func (d *gated) Act(context.Context, pluginsdk.SurfaceAct) error {
 
 func (d *gated) Visibility(bool) {}
 
-func (d *gated) Close() {
+func (d *gated) Close(pluginsdk.CloseReason) {
 	d.s.mu.Lock()
 	delete(d.s.gateds, d.open.Instance)
 	d.s.mu.Unlock()

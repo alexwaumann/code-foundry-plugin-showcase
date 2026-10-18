@@ -1,7 +1,7 @@
 {
   "name": "showcase",
   "displayName": "Showcase",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Every plugin component in one gallery: each view node, field, span and button style, plus flags, toasts, context, session environment, secrets, events, host commands and its own thread and terminal. For plugin authors and for testing the host.",
   "protocol": 1,
   "exec": ["bin/showcase"],

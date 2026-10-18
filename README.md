@@ -72,6 +72,24 @@ code-foundry plugin logs showcase --lines 50
 One file per tab (`tab_*.go`), registered in `gallery.go`; `state.go` holds what tabs
 share; `commands.go` the manifest's commands; `gated.go` the gated surface.
 
+## Changelog
+
+### 0.1.2
+
+- Built against the released Code Foundry SDK, `pluginsdk` v0.1.0 (code-foundry
+  `4ed617fd`): the surfaces' `Close` takes the close reason the host now sends, and
+  `go.mod` lists the SDK as a direct dependency. No behaviour change; same permissions
+  as 0.1.1, so updating keeps it enabled.
+
+### 0.1.1
+
+- A Start button on the empty terminal state, a shorter Gated sub-line, the version in
+  the header from one place.
+
+### 0.1.0
+
+- First release.
+
 ## License
 
 Apache-2.0
