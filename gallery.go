@@ -252,4 +252,4 @@ func orNone(s string, mono bool) *ui.Inline {
 }
 
 // version is plugin.json's, shown in the header pill.
-const version = "0.1.2"
+const version = "0.2.0"

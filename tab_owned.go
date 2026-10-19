@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/alexwaumann/code-foundry/pluginsdk"
@@ -12,7 +13,7 @@ import (
 var ownedTab = tabDef{
 	key: tabOwned, label: "Owned",
 	short: "Plugin thread and terminal nodes",
-	look:  "The plugin's own threads (editable, read-only) and a terminal ticking every second; Open in bottom panel; nothing here shows in the sidebar.",
+	look:  "The plugin's own threads (editable, read-only) and a terminal ticking every second; Read scrollback counts its whole output; Open in bottom panel; nothing here shows in the sidebar.",
 	nodes: ownedNodes,
 	acts: map[string]actFunc{
 		"owned-ask":      askHelper,
@@ -21,6 +22,7 @@ var ownedTab = tabDef{
 		"owned-recreate": recreateOwned,
 		"term-restart":   restartTerminal,
 		"term-stop":      stopTerminal,
+		"term-read":      readScrollback,
 		"owned-refresh":  refreshOwnedAct,
 		"owned-variant":  pickVariant,
 	},
@@ -179,15 +181,83 @@ func ownedNodes(g *gallery) []ui.Node {
 	term := ui.Node{Key: "term-none", Empty: &ui.Empty{Glyph: ui.IconGlyph("terminal", ui.ToneMuted), Title: "No terminal",
 		Body:    ui.Plain("Start one: a shell loop that ticks every second."),
 		Actions: []ui.Button{ui.EventButton("term-start-btn", "Start", "term-restart").WithIcon("play").WithStyle(ui.ButtonOutline)}}}
+	termNodes := []ui.Node{term}
 	if o.Terminal != "" {
-		term = ui.Node{Key: "term", Terminal: &ui.Terminal{TerminalID: o.Terminal, Title: tickerTitle, Rows: 10,
+		termNodes = []ui.Node{{Key: "term", Terminal: &ui.Terminal{TerminalID: o.Terminal, Title: tickerTitle, Rows: 10,
 			Actions: []ui.Button{
-				ui.EventButton("term-restart-btn", "Restart", "term-restart").WithIcon("rotate-ccw"),
+				ui.EventButton("term-read-btn", "Read scrollback", "term-read").WithIcon("file-text"),
 				ui.EventButton("term-stop-btn", "Stop", "term-stop").WithIcon("square").WithStyle(ui.ButtonDestructive),
-			}}}
+			}}}}
+		if r := o.Read; r.Terminal == o.Terminal && !r.At.IsZero() {
+			termNodes = append(termNodes, readNode(r))
+		}
+		termNodes = append(termNodes, ui.NewActions("bar-term", ui.EventButton("term-restart-btn", "Restart", "term-restart").WithIcon("rotate-ccw")))
 	}
-	termSec := ui.NewSection("sec-term", "Plugin terminal (10 rows)", term)
+	termSec := ui.NewSection("sec-term", "Plugin terminal (10 rows)", termNodes...)
 	return append(nodes, threadsSec, termSec, listSec)
+}
+
+// termRead is what the last Read scrollback found: terminal/read with the scrollback
+// and without, to compare.
+type termRead struct {
+	Terminal         string
+	Lines, Screen    int
+	Truncated        bool
+	First, Last, Err string
+	At               time.Time
+}
+
+func readNode(r termRead) ui.Node {
+	if r.Err != "" {
+		return ui.Node{Key: "term-read", Text: &ui.Text{Size: ui.TextSm, Content: ui.Spans(ui.T(r.Err).WithTone(ui.ToneError))}}
+	}
+	spans := []ui.Span{ui.T(fmt.Sprintf("%d lines with the scrollback, %d on the screen", r.Lines, r.Screen)).AsStrong()}
+	if r.Truncated {
+		spans = append(spans, ui.T(" (its head cut at 1 MB)"))
+	}
+	spans = append(spans, ui.T(" · "), ui.At(r.At, ui.TimeRelative))
+	if r.First != "" {
+		spans = append(spans, ui.T(" · first "), ui.T(clipRunes(r.First, 60)).AsMono())
+	}
+	return ui.Node{Key: "term-read", Text: &ui.Text{Size: ui.TextSm, Content: ui.Spans(spans...)}}
+}
+
+// readScrollback reads the ticker's whole output (terminal/read with the scrollback) and
+// its screen, and shows how many lines each has.
+func readScrollback(ctx context.Context, g *gallery, _ pluginsdk.SurfaceAct) error {
+	s := g.s
+	s.mu.Lock()
+	id, h := s.owned.Terminal, s.h
+	s.mu.Unlock()
+	if id == "" {
+		return fmt.Errorf("no terminal to read: start it first")
+	}
+	r := termRead{Terminal: id, At: s.now()}
+	if !h.HasCapability("terminal.scrollback") {
+		r.Err = "This Code Foundry cannot read a terminal's scrollback (no terminal.scrollback capability)."
+	} else if all, err := h.ReadTerminalWith(ctx, id, pluginsdk.ReadTerminalOptions{Scrollback: true}); err != nil {
+		r.Err = "terminal/read: " + err.Error()
+	} else {
+		r.Lines, r.Truncated = all.Lines, all.Truncated
+		lines := strings.Split(all.Text, "\n")
+		r.First, r.Last = lines[0], lines[len(lines)-1]
+		// The screen's rows below the last output are empty: not lines.
+		if screen, err := h.ReadTerminal(ctx, id, 0); err == nil && strings.TrimRight(screen.Text, "\n") != "" {
+			r.Screen = strings.Count(strings.TrimRight(screen.Text, "\n"), "\n") + 1
+		}
+	}
+	s.mu.Lock()
+	s.owned.Read = r
+	s.mu.Unlock()
+	return g.render()
+}
+
+func clipRunes(s string, n int) string {
+	r := []rune(s)
+	if len(r) <= n {
+		return s
+	}
+	return string(r[:n-1]) + "…"
 }
 
 func askHelper(ctx context.Context, g *gallery, _ pluginsdk.SurfaceAct) error {

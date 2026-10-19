@@ -1,8 +1,8 @@
 {
   "name": "showcase",
   "displayName": "Showcase",
-  "version": "0.1.2",
-  "description": "Every plugin component in one gallery: each view node, field, span and button style, plus flags, toasts, context, session environment, secrets, events, host commands and its own thread and terminal. For plugin authors and for testing the host.",
+  "version": "0.2.0",
+  "description": "Every plugin component in one gallery: each view node, field, span and button style, plus flags, toasts, context, session environment, secrets, events, host commands, a wake source and its own thread and terminal. For plugin authors and for testing the host.",
   "protocol": 1,
   "exec": ["bin/showcase"],
   "permissions": {
@@ -51,6 +51,22 @@
         { "name": "scope", "type": "enum", "enum": ["thread", "global"], "default": "thread", "description": "The thread only, or everywhere" },
         { "name": "thread", "context": "thread", "description": "The thread (default: the active one)" }
       ]
+    },
+    {
+      "name": "fire-tick",
+      "title": "Fire Showcase Tick Now",
+      "description": "Fire the tick wake source now: wake the threads subscribed to it (each armed every, or --every).",
+      "timeoutSeconds": 10,
+      "args": [{ "name": "every", "description": "Only the subscriptions with this every (default: each one armed)" }]
+    }
+  ],
+  "wakes": [
+    {
+      "name": "tick",
+      "title": "Tick",
+      "description": "Fires every <every> while a thread is subscribed (once without --repeat), and when fired by hand (Fire tick, fire-tick); the payload has the tick count. A demo of wake sources.",
+      "scope": "global",
+      "args": [{ "name": "every", "type": "duration", "default": "10s", "description": "How often it fires" }]
     }
   ],
   "surfaces": [

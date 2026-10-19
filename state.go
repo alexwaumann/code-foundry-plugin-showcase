@@ -38,6 +38,7 @@ type showcase struct {
 	owned        ownedState
 	secrets      secretState
 	invokes      map[string]invokeResult // by command
+	ticks        tickState
 	closed       bool
 }
 
@@ -83,6 +84,7 @@ type ownedState struct {
 	Threads                    []pluginsdk.PluginThread
 	Terminals                  []pluginsdk.PluginTerminal
 	Sent                       int
+	Read                       termRead // the last Read scrollback
 }
 
 type secretState struct {
@@ -126,6 +128,7 @@ func newShowcase() *showcase {
 		subs:        map[string]*subscription{},
 		invokes:     map[string]invokeResult{},
 		gates:       gateState{Threads: map[string]bool{}},
+		ticks:       newTickState(),
 	}
 	for _, src := range sources {
 		s.subs[src] = &subscription{}
@@ -174,6 +177,7 @@ func (s *showcase) init(ctx context.Context, h *pluginsdk.Host) error {
 func (s *showcase) shutdown() {
 	s.mu.Lock()
 	s.closed = true
+	s.stopTicksLocked()
 	s.mu.Unlock()
 }
 

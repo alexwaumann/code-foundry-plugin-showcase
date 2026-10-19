@@ -15,7 +15,7 @@ import (
 var hostTab = tabDef{
 	key: tabHost, label: "Host",
 	short: "Host calls on this panel's thread",
-	look:  "Each button calls the host on the thread this panel is beside: flags in the sidebar, toasts, the Gated tab, env, Keychain, event counts, host commands.",
+	look:  "Each button calls the host on the thread this panel is beside: flags in the sidebar, toasts, the Gated tab, env, Keychain, event counts, the tick wake source, host commands.",
 	nodes: hostNodes,
 	acts: map[string]actFunc{
 		"flag-seen":     flagUntilSeen,
@@ -183,6 +183,9 @@ func hostNodes(g *gallery) []ui.Node {
 	}
 	nodes = append(nodes, ui.NewSection("sec-events", "Subscribe: events per source",
 		ui.Node{Key: "list-subs", List: &ui.List{Rows: subRows}}))
+
+	// Wake source.
+	nodes = append(nodes, s.wakeSectionLocked())
 
 	// Invoke.
 	invNodes := []ui.Node{ui.NewActions("bar-invoke",

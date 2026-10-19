@@ -1,7 +1,8 @@
 // Command showcase is a Code Foundry plugin that uses every plugin component: a
 // "gallery" side-panel surface with one tab per family of view nodes (text, data, log,
 // forms, status, actions, its own thread and terminal, host calls), a "gated" surface
-// that exists only while the plugin's showcase.on fact holds, and four commands. It is
+// that exists only while the plugin's showcase.on fact holds, five commands, and the
+// tick wake source. It is
 // a reference for plugin authors and a smoke test for changes to the host's renderer.
 package main
 
@@ -32,11 +33,14 @@ func (s *showcase) plugin() pluginsdk.Plugin {
 		Shutdown: func(context.Context, *pluginsdk.Host) {
 			s.shutdown()
 		},
+		OnWakeSubscribed:   s.wakeSubscribed,
+		OnWakeUnsubscribed: s.wakeUnsubscribed,
 		Commands: map[string]pluginsdk.CommandFunc{
-			"ping": s.ping,
-			"boom": s.boom,
-			"flag": s.flag,
-			"gate": s.gate,
+			"ping":      s.ping,
+			"boom":      s.boom,
+			"flag":      s.flag,
+			"gate":      s.gate,
+			"fire-tick": s.fireTickCmd,
 		},
 		Surfaces: map[string]pluginsdk.SurfaceFactory{
 			"gallery": s.newGallery,
